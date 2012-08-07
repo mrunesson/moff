@@ -9,11 +9,11 @@ object Moff {
 
 
 
-	def downloadArtifact(artifact:Artifact, dest:LocalRepository) {
+	def downloadArtifact(artifact:Artifact, downloader:Downloader) {
 	    println("Downloading: " + artifact.getArtifactAsPath())
 	    val repo = new RemoteRepository
-		val downloader = new Downloader()
-		val newLocalFiles = downloader.download(artifact, dest)
+		
+		val newLocalFiles = downloader.download(artifact)
 		val newPoms = newLocalFiles.filter(_.endsWith(".pom")).map(new Pom(_))
 //		newPoms.map((pom:Pom) => pom.getDependencyArtifacts).flatten.foreach((a:Artifact) =>println("DepArtifacts found: " + a.getArtifactAsPath))
 //		newPoms.map((pom:Pom) => pom.getParentArtifacts).flatten.foreach((a:Artifact) =>println("ParentArtifacts found: " + a.getArtifactAsPath))
@@ -27,7 +27,7 @@ object Moff {
 		  else a
 		})
 //		newArtifactsWithLatest.foreach((a:Artifact)=>println("FOO: " + a.getArtifactAsPath))
-		newArtifactsWithLatest.foreach(downloadArtifact(_, dest))
+		newArtifactsWithLatest.foreach(downloadArtifact(_, downloader))
 		println
 	}
 
@@ -35,8 +35,9 @@ object Moff {
 	def main(args : Array[String]) { 
 		val rootArtifact = new Artifact(args(0), args(1), args(2))
 		val local = new LocalRepository("/tmp/foo")
-
-		downloadArtifact(rootArtifact, local)
+		val downloader = new Downloader(local)
+		val repo = new RemoteRepository
+		rootArtifact.download(downloader, repo)
 	}
 
 }

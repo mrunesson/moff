@@ -6,9 +6,9 @@ import scala.io.Source
 import org.apache.commons.io.IOUtils
 import java.nio.file._
 
-class Downloader {
+class Downloader(val destination:LocalRepository) {
 
-	def download(artifact:Artifact , destination:LocalRepository) : Seq[String] = {
+	def download(artifact:Artifact) : Seq[String] = {
 		val repo = new RemoteRepository()
 		val length = repo.getRepositoryURL().toString.length
 		val relativeURLs = repo.getArtifactsComponentsURLs(artifact)

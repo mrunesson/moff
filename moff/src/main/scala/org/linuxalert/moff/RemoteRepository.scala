@@ -44,18 +44,22 @@ class RemoteRepository extends Repository {
 	 * Load maven-metadata.xml and return artifact of released version.
 	 */
 	def getLatestReleasedArtifact(artifact:Artifact): Artifact = {
-			println(getURLForArtifactMetaData(artifact))
+//			println(getURLForArtifactMetaData(artifact))
 			val rootNode=XML.load(getURLForArtifactMetaData(artifact))
 			try {
-				val releasedVersion = rootNode.child.find(_.label.equals("versioning")).get.child.find(_.label.equals("release")).get.text
-						new Artifact(artifact.groupId, artifact.artifactId, releasedVersion)
+				try {
+					val releasedVersion = rootNode.child.find(_.label.equals("versioning")).get.child.find(_.label.equals("release")).get.text
+							new Artifact(artifact.groupId, artifact.artifactId, releasedVersion)
+				} catch {
+				case _ => new Artifact(artifact.groupId, artifact.artifactId, rootNode.child.find(_.label.equals("version")).get.text)
+				}
 			} catch {
-			case _ => new Artifact(artifact.groupId, artifact.artifactId, rootNode.child.find(_.label.equals("version")).get.text)
+			case _ => new Artifact(artifact.groupId, artifact.artifactId, rootNode.child.find(_.label.equals("versioning")).get.child.find(_.label.equals("versions")).get.child.find(_.label.equals("version")).get.child.text)
 			}
 	}
 
 	def getLatestArtifact(artifact:Artifact): Artifact = {
-			println(getURLForArtifactMetaData(artifact))
+//			println(getURLForArtifactMetaData(artifact))
 			val rootNode=XML.load(getURLForArtifactMetaData(artifact))
 			try {
 				val latestVersion = rootNode.child.find(_.label.equals("versioning")).get.child.find(_.label.equals("latest")).get.text

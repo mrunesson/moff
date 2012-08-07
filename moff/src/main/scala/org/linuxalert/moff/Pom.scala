@@ -5,68 +5,47 @@ import scala.xml._
 class Pom(val pom:String) {
 
 	private val rootNode = XML.load(pom);
-	private val properties = getProperties(rootNode);
-	private val parentArtifact = {
-			val parentNode=rootNode.child.find(_.label.equals("parent"));
-			if (!parentNode.isEmpty) {
-				createArtifact(parentNode.get, List(), false);
-			} else {
-				new Artifact("","","")
-			}
-	}
-
-
-	private val pomArtifact = createArtifact(rootNode, List(parentArtifact), false);
-
 
 	private def flattenPom(node:Node): Seq[Node] = {
 			Seq.concat(node, node.child.map(flattenPom)).flatten
 	} 
 
-
-	private def createArtifact = { (node:Node, inherited:List[Artifact], plugin:Boolean) =>
-//	println(pom)
-	val groupIdNode = node.child.find(_.label.equalsIgnoreCase("groupId"))
-	var groupId : String = "";
-	if (!groupIdNode.isEmpty) {
-		groupId = groupIdNode.get.text
-	} else {
-		if (plugin) groupId="org.apache.maven.plugins"
-				else {
-					println("For " + pom + " guessing groupId.")
-					groupId = inherited.filterNot(_.groupId.isEmpty)(0).groupId
-				}
+	private def getNodeGroupId(node:Node): String = {
+			val groupIdNode = node.child.find(_.label.equalsIgnoreCase("groupId"));
+			if (!groupIdNode.isEmpty) {
+				groupIdNode.get.text
+			} else ""
 	}
 
-	val artifactIdNode = node.child.find(_.label.equalsIgnoreCase("artifactId"))
-			var artifactId : String = "";
-	if (!artifactIdNode.isEmpty) {
-		artifactId = artifactIdNode.get.text
-	} else {
-		println("For " + pom + " guessing artifactId.")
-		artifactId = inherited.filterNot(_.artifactId.isEmpty)(0).artifactId
+	private def getNodeArtifactId(node:Node): String = {
+			val artifactIdNode = node.child.find(_.label.equalsIgnoreCase("artifactId"));
+			if (!artifactIdNode.isEmpty) {
+				artifactIdNode.get.text
+			} else "";
 	}
 
-	val versionNode = node.child.find(_.label.equalsIgnoreCase("version"))
-			var version : String = "";
-	if (!versionNode.isEmpty) {
-		version = versionNode.get.text
-	} else {
-		println("For " + pom + " using latest released version for " + artifactId)
-		version = ""
-	} 
-
-	println("New artifact created: " + groupId + " " + artifactId + " " + version + ".")
-	new Artifact(groupId, artifactId, version)
-
+	private def getNodeVersion(node:Node): String = {
+			val versionNode = node.child.find(_.label.equalsIgnoreCase("version"));
+			if (!versionNode.isEmpty) {
+				versionNode.get.text
+			} else "";
 	}
 
+	
+	/**
+	 * Returns properties from the POMs normal defined elements like artifactId, version and groupId.
+	 */
 	def getProjectProperties(): Map[String,String] = {
-//			println("ProjectProperties: " + parentArtifact.version + " " + parentArtifact.groupId)
-			Map(("${project.version}"->parentArtifact.version),
-					("${project.groupId}"->parentArtifact.groupId))
+			Map(("${project.version}"->getNodeVersion(rootNode)),
+					("${project.groupId}"->getNodeGroupId(rootNode)),
+					("${project.ArtifactId}"->getNodeArtifactId(rootNode))).
+			filter(!_._2.isEmpty())
 	}
 
+	
+	/**
+	 * Get properties from the POMs properties elements.
+	 */
 	def getProperties(node: Node=rootNode): Map[String,String] = {
 			val findResult = node.child.find(_.label.equals("properties"));
 			if (!findResult.isEmpty) {
@@ -76,41 +55,65 @@ class Pom(val pom:String) {
 				Map()
 			}
 	}
+	
+	def getAllProperties(): Map[String,String] = {
+	    getProperties()++getProjectProperties()
+	}
 
+	
 	private def getAllPluginNodes(): Seq[Node] = {
 			flattenPom(rootNode).filter(_.label.equalsIgnoreCase("plugin"))
 	}
-
+	/**
+	 * Get artifacts from all plugins referd by the POM.
+	 */
 	def getPluginArtifacts(): Seq[Artifact] = {
-			getAllPluginNodes().map(createArtifact(_,List(pomArtifact, parentArtifact), true))
+//	        getAllPluginNodes().foreach((n:Node) => println(getNodeArtifactId(n) + getNodeVersion(n)))
+			getAllPluginNodes()
+			.map((n:Node) => new Artifact(getNodeGroupId(n), getNodeArtifactId(n), getNodeVersion(n)))
+			.map((a:Artifact) => {
+				if (a.groupId.isEmpty()) new Artifact("org.apache.maven.plugins", a.artifactId, a.version)
+				else a
+			})
 			.map(_.setProperties(getProperties()))
 			.map(_.setProperties(getProjectProperties()))
 	}
 
+	
 	private def getAllDependencyNodes(): Seq[Node] = {
-			flattenPom(rootNode)
-				.filter(_.label.equalsIgnoreCase("dependency"))
-				.filter(!_.child.exists(_.exists(_.text.equals("test"))))
+	        rootNode.child.filter(_.label.equals("dependencies"))
+	        .map(_.child).flatten
+			.filter(_.label.equalsIgnoreCase("dependency"))
+//			.filter(!_.child.exists(_.exists(_.text.equals("test"))))
+			.filter(!_.child.exists(_.exists(_.text.equals("system"))))
+			.filter(!_.child.exists(_.exists(_.text.equals("provided"))))
 	}
-
+	/**
+	 * Get artifacts for all dependencies in the POM.
+	 */
 	def getDependencyArtifacts(): Seq[Artifact] = {
-			getAllDependencyNodes().map(createArtifact(_,List(pomArtifact, parentArtifact), false))
+			getAllDependencyNodes()
+			.map((n:Node) => new Artifact(getNodeGroupId(n), getNodeArtifactId(n), getNodeVersion(n)))
 			.map(_.setProperties(getProperties()))
 			.map(_.setProperties(getProjectProperties()))
 	}
 
+	
 	private def getParentNodes(): Seq[Node] = {
-			val parentNode=rootNode.child.find(_.label.equals("parent"))
-					if (!parentNode.isEmpty) {
-						List(parentNode.get)
-					} else {
-						List()
-					}
+			val parentNode=rootNode.child.find(_.label.equals("parent"));
+			if (!parentNode.isEmpty) {
+				List(parentNode.get)
+			} else {
+				List()
+			}
 
 	}
-
+	/**
+	 * Get an artifact of representing the parent of the POM
+	 */
 	def getParentArtifacts(): Seq[Artifact] = {
-			getParentNodes().map(createArtifact(_,List(), false))
+			getParentNodes()
+			.map((n:Node) => new Artifact(getNodeGroupId(n), getNodeArtifactId(n), getNodeVersion(n)))
 			.map(_.setProperties(getProperties()))
 			.map(_.setProperties(getProjectProperties()))
 	}
