@@ -5,7 +5,7 @@
 	<artifactId>moff</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>${project.artifactId}</name>
-	<description>Maven off line, mirrior the parts of maven central you need.</description>
+	<description>Maven off line, mirror the parts of maven central you need.</description>
 	<inceptionYear>2012</inceptionYear>
 	<licenses>
 		<license>
@@ -15,9 +15,20 @@
 		</license>
 	</licenses>
 
+	<developers>
+		<developer>
+			<id>magru</id>
+			<name>Magnus Runesson</name>
+			<email>M.Runesson@gmail.com</email>
+			<url>http://www.linuxalert.org/</url>
+			<timezone>+1</timezone>
+		</developer>
+	</developers>
+
 	<properties>
 		<maven.compiler.source>1.7</maven.compiler.source>
 		<maven.compiler.target>1.7</maven.compiler.target>
+		<app.main.class>org.linuxalert.moff.Moff</app.main.class>
 		<encoding>UTF-8</encoding>
 		<scala.version>2.9.1</scala.version>
 	</properties>
@@ -89,7 +100,7 @@
 					<launchers>
 						<launcher>
 							<id>moff</id>
-							<mainClass>org.linuxalert.moff.Moff</mainClass>
+							<mainClass>${app.main.class}</mainClass>
 						</launcher>
 					</launchers>
 				</configuration>
@@ -97,7 +108,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
-				<version>2.12</version>
+				<version>2.12.1</version>
 				<configuration>
 					<useFile>false</useFile>
 					<disableXmlReport>true</disableXmlReport>
@@ -110,12 +121,29 @@
 				</configuration>
 			</plugin>
 			<plugin>
-				<artifactId>maven-assembly-plugin</artifactId>
-				<configuration>
-					<descriptorRefs>
-						<descriptorRef>jar-with-dependencies</descriptorRef>
-					</descriptorRefs>
-				</configuration>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-shade-plugin</artifactId>
+				<version>1.7.1</version>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>shade</goal>
+						</goals>
+						<configuration>
+							<transformers>
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+									<manifestEntries>
+										<Main-Class>${app.main.class}</Main-Class>
+										<X-Compile-Source-JDK>${maven.compile.source}</X-Compile-Source-JDK>
+										<X-Compile-Target-JDK>${maven.compile.target}</X-Compile-Target-JDK>
+									</manifestEntries>
+								</transformer>
+							</transformers>
+						</configuration>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>
