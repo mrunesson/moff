@@ -4,6 +4,7 @@ import java.net.URL
 import scala.io.Source
 import scala.xml._
 
+/** Representing Maven central repo. */
 class RemoteRepository extends Repository {
 
 	private val repositoryURL = new URL("http://central.maven.org/maven2/")
@@ -11,10 +12,10 @@ class RemoteRepository extends Repository {
 	def getRepositoryURL() : String = repositoryURL.toString
 
 	def getURLForArtifact(artifact:Artifact): String =
-	getRepositoryURL + artifact.getArtifactAsPath
+  	    getRepositoryURL + artifact.getArtifactAsPath
 
 	def getURLForArtifactMetaData(artifact:Artifact): String =
-	getRepositoryURL + artifact.getArtifactWithoutVersionAsPath  + "maven-metadata.xml"
+	    getRepositoryURL + artifact.getArtifactWithoutVersionAsPath  + "maven-metadata.xml"
 
 	def getArtifactsComponentsURLs(artifact:Artifact): Seq[String] = {
 			val parserFactory = new org.ccil.cowan.tagsoup.jaxp.SAXFactoryImpl
@@ -44,7 +45,6 @@ class RemoteRepository extends Repository {
 	 * Load maven-metadata.xml and return artifact of released version.
 	 */
 	def getLatestReleasedArtifact(artifact:Artifact): Artifact = {
-//			println(getURLForArtifactMetaData(artifact))
 			val rootNode=XML.load(getURLForArtifactMetaData(artifact))
 			try {
 				try {
@@ -58,8 +58,10 @@ class RemoteRepository extends Repository {
 			}
 	}
 
+   /**
+	 * Load maven-metadata.xml and return artifact of latest version.
+	 */
 	def getLatestArtifact(artifact:Artifact): Artifact = {
-//			println(getURLForArtifactMetaData(artifact))
 			val rootNode=XML.load(getURLForArtifactMetaData(artifact))
 			try {
 				val latestVersion = rootNode.child.find(_.label.equals("versioning")).get.child.find(_.label.equals("latest")).get.text

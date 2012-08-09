@@ -1,25 +1,37 @@
 package org.linuxalert.moff
 
+import java.lang.Integer;
+
+/** Immutable class representing a Maven artifact.
+ * 
+ * Constructor requires groupId, artifactId and version. Version can be a
+ * version number, an empty string, RELEASE or LATEST.
+ */
 class Artifact(val groupId:String, val artifactId:String, val versionOrg:String) {
 
     val version = versionOrg.stripSuffix("-SNAPSHOT")
   
+    /** Get full path for artifact. */
 	def getArtifactAsPath():String = {
 			getArtifactWithoutVersionAsPath + version + "/"
 	}
 
+    /** Get path for artifact without version number. */
 	def getArtifactWithoutVersionAsPath():String = {
 			groupId.replace(".","/") + "/" + artifactId + "/"
 	}
 	
+	/** Return a new artifact with provided properties set. */
 	def setProperties(properties:Map[String,String]):Artifact = {
-//	    println("Source artifact: " + groupId + " " + artifactId + " " + version + ".")
-//	    println("New artifact created from prop: " + properties.getOrElse(groupId,groupId) + " " + properties.getOrElse(artifactId,artifactId) + " " + properties.getOrElse(version,version) + ".")
 		new Artifact(properties.getOrElse(groupId,groupId), 
 		    properties.getOrElse(artifactId,artifactId),
 		    properties.getOrElse(version,version))
 	}
 	
+	/** Resolve what version to download of the artifact using artifact 
+	 *  meta data and information from repo. Returns a new Artifact with
+	 *  real version number set.
+	 */
 	def resolveArtifactVesion(repo: RemoteRepository):Artifact = {
 	    try {
 		  if (this.version.isEmpty()) repo.getLatestReleasedArtifact(this)
@@ -34,19 +46,26 @@ class Artifact(val groupId:String, val artifactId:String, val versionOrg:String)
 	    }
 	}
 	
+	/**
+	 * Downloading this artifact using provided downloader from repository repo.
+	 */
 	def download(downloader:Downloader, repo: RemoteRepository) {
 	    downloadInternal(0, downloader, repo)
 	}
 	
-	private def printSpace(n:Integer) {
+	/** Helper method to indent printing. */
+	private def printIndent(n:Integer, s:String) {
 	    for (i <- 0 until n) {
-            print("    ")
+            print(" ")
 	    }
+	    println(s)
 	}
 	
+	/** Helper function for download function doing the actual work.
+	 *  Resolving properties and dependencies, then downloading dependencies.
+	 */
 	private def downloadInternal(level:Integer, downloader:Downloader, repo: RemoteRepository, inheritedProperties: Map[String,String]=Map()):Map[String,String] = {
-		printSpace(level)
-	    println("Downloading: " + getArtifactAsPath())
+		printIndent(level, "Downloading: " + getArtifactAsPath())
 		var newLocalFiles: Seq[String] = null;
 		var newPoms: Seq[Pom] = null;
 	    try {
@@ -87,9 +106,8 @@ class Artifact(val groupId:String, val artifactId:String, val versionOrg:String)
 			.filter(!_.groupId.isEmpty)
 		newPluginArtifacts.foreach(_.downloadInternal(level+1, downloader,repo, properties))
 		
-		// Download plugins and its dependencies. ????
-		printSpace(level)
-		println("Ready downloading: " + getArtifactAsPath())
+		printIndent(level, "Ready: " + getArtifactAsPath())
+		
 		properties
 	}
 

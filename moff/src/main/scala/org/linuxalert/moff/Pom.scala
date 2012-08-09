@@ -2,6 +2,11 @@ package org.linuxalert.moff
 
 import scala.xml._
 
+/** Parsing and representing a pom.xml file. 
+ * 
+ *  The class is immutable.
+ *  Construction takes a filename for a pom.xml-file. 
+ */
 class Pom(val pom:String) {
 
 	private val rootNode = XML.load(pom);
@@ -64,11 +69,11 @@ class Pom(val pom:String) {
 	private def getAllPluginNodes(): Seq[Node] = {
 			flattenPom(rootNode).filter(_.label.equalsIgnoreCase("plugin"))
 	}
+	
 	/**
 	 * Get artifacts from all plugins referd by the POM.
 	 */
 	def getPluginArtifacts(): Seq[Artifact] = {
-//	        getAllPluginNodes().foreach((n:Node) => println(getNodeArtifactId(n) + getNodeVersion(n)))
 			getAllPluginNodes()
 			.map((n:Node) => new Artifact(getNodeGroupId(n), getNodeArtifactId(n), getNodeVersion(n)))
 			.map((a:Artifact) => {
@@ -108,6 +113,7 @@ class Pom(val pom:String) {
 			}
 
 	}
+	
 	/**
 	 * Get an artifact of representing the parent of the POM
 	 */

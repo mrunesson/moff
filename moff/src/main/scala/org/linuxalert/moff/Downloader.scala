@@ -6,8 +6,15 @@ import scala.io.Source
 import org.apache.commons.io.IOUtils
 import java.nio.file._
 
+/** Responsible for handling the download a specific artifact and store it on local storage.  
+ * 
+ *  Constructions requires a local repo destination for storage.
+ *  
+ *  TODO: This needs a refactoring to be more general.
+ */
 class Downloader(val destination:LocalRepository) {
 
+    /** Download an Artifact and return a list of files downloaded. */
 	def download(artifact:Artifact) : Seq[String] = {
 		val repo = new RemoteRepository()
 		val length = repo.getRepositoryURL().toString.length

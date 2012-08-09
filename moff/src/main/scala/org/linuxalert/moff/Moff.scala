@@ -3,7 +3,9 @@ package org.linuxalert.moff
 import scala.xml._
 
 /**
- * @author ${user.name}
+ * Main class for Moff; Maven Offline.
+ * 
+ * @author Magnus Runesson
  */
 object Moff {
 
