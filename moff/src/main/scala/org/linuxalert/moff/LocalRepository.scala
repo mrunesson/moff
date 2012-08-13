@@ -10,7 +10,7 @@ import scala.io.Source
  */
 class LocalRepository(val path:String) extends Repository {
 
-  private val repositoryURL = path + "/"
+  private val repositoryURL = path + java.io.File.separator
   
   def getRepositoryURL() : String = repositoryURL
   

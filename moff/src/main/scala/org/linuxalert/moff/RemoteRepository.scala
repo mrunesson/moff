@@ -10,12 +10,14 @@ class RemoteRepository extends Repository {
 	private val repositoryURL = new URL("http://central.maven.org/maven2/")
 
 	def getRepositoryURL() : String = repositoryURL.toString
+	
+	def convertPathToURL(path:String) : String = path.replace(java.io.File.separatorChar, '/')
 
 	def getURLForArtifact(artifact:Artifact): String =
-  	    getRepositoryURL + artifact.getArtifactAsPath
+  	    getRepositoryURL + convertPathToURL(artifact.getArtifactAsPath)
 
 	def getURLForArtifactMetaData(artifact:Artifact): String =
-	    getRepositoryURL + artifact.getArtifactWithoutVersionAsPath  + "maven-metadata.xml"
+	    getRepositoryURL + convertPathToURL(artifact.getArtifactWithoutVersionAsPath)  + "maven-metadata.xml"
 
 	def getArtifactsComponentsURLs(artifact:Artifact): Seq[String] = {
 			val parserFactory = new org.ccil.cowan.tagsoup.jaxp.SAXFactoryImpl

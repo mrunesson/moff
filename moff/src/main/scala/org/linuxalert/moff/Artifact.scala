@@ -13,12 +13,12 @@ class Artifact(val groupId:String, val artifactId:String, val versionOrg:String)
   
     /** Get full path for artifact. */
 	def getArtifactAsPath():String = {
-			getArtifactWithoutVersionAsPath + version + "/"
+			getArtifactWithoutVersionAsPath + version + java.io.File.separator
 	}
 
     /** Get path for artifact without version number. */
 	def getArtifactWithoutVersionAsPath():String = {
-			groupId.replace(".","/") + "/" + artifactId + "/"
+			groupId.replace(".",java.io.File.separator) + java.io.File.separator + artifactId + java.io.File.separator
 	}
 	
 	/** Return a new artifact with provided properties set. */

@@ -7,8 +7,10 @@ class ArtifactTest {
 
     @Test def getRepositoryURLShouldReturnMavenCentralURL() {
     val toTest = new Artifact("foo.bar","gazonk.muu","3.0")
-    assert(toTest.getArtifactAsPath()=="foo/bar/gazonk.muu/3.0/")
-    assert(toTest.getArtifactWithoutVersionAsPath()=="foo/bar/gazonk.muu/")
+    assert(toTest.getArtifactAsPath()=="foo" + java.io.File.separator + "bar" +
+            java.io.File.separator + "gazonk.muu" + java.io.File.separator + "3.0" + java.io.File.separator)
+    assert(toTest.getArtifactWithoutVersionAsPath()=="foo" + java.io.File.separator + "bar" +
+            java.io.File.separator + "gazonk.muu" + java.io.File.separator)
   }
       
 }
