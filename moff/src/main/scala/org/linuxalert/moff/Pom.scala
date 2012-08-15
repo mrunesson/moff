@@ -71,7 +71,7 @@ class Pom(val pom:String) {
 	}
 	
 	/**
-	 * Get artifacts from all plugins referd by the POM.
+	 * Get artifacts from all plugins referred by the POM.
 	 */
 	def getPluginArtifacts(): Seq[Artifact] = {
 			getAllPluginNodes()
@@ -89,7 +89,8 @@ class Pom(val pom:String) {
 	        rootNode.child.filter(_.label.equals("dependencies"))
 	        .map(_.child).flatten
 			.filter(_.label.equalsIgnoreCase("dependency"))
-//			.filter(!_.child.exists(_.exists(_.text.equals("test"))))
+			.filter(!_.child.exists(_.exists(_.text.equals("compile"))))
+			.filter(!_.child.exists(_.exists(_.text.equals("test"))))
 			.filter(!_.child.exists(_.exists(_.text.equals("system"))))
 			.filter(!_.child.exists(_.exists(_.text.equals("provided"))))
 	}

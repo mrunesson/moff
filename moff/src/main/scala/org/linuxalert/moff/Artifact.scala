@@ -65,7 +65,7 @@ class Artifact(val groupId:String, val artifactId:String, val versionOrg:String)
 	 *  Resolving properties and dependencies, then downloading dependencies.
 	 */
 	private def downloadInternal(level:Integer, downloader:Downloader, repo: RemoteRepository, inheritedProperties: Map[String,String]=Map()):Map[String,String] = {
-		printIndent(level, "Downloading: " + getArtifactAsPath())
+//		printIndent(level, "Downloading: " + getArtifactAsPath())
 		var newLocalFiles: Seq[String] = null;
 		var newPoms: Seq[Pom] = null;
 	    try {
@@ -105,8 +105,6 @@ class Artifact(val groupId:String, val artifactId:String, val versionOrg:String)
 			.map(_.setProperties(properties))
 			.filter(!_.groupId.isEmpty)
 		newPluginArtifacts.foreach(_.downloadInternal(level+1, downloader,repo, properties))
-		
-		printIndent(level, "Ready: " + getArtifactAsPath())
 		
 		properties
 	}
